@@ -1,0 +1,4 @@
+.env
+.vscode/settings.json
+__pycache__/helpers.cpython-313.pyc
+hourly_difference_new.csv
