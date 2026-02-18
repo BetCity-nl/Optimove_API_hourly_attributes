@@ -258,3 +258,41 @@ users_query = f"""with
             LEFT JOIN bonus_counts AS bc
                 ON bc.username = usrt.username
                             """
+
+
+update_hourly_table_query = f"""
+                            create or replace table `{os.environ.get('PROJECT')}.{os.environ.get('OPTIMOVE_DATASET')}.{os.environ.get('OPTI_TABLE_OPTIMOVE')}` as (
+
+                            select
+
+                            -- Update only values from daily change diff
+                            wallet_username,
+                            case when number_of_unclaimed_active_bonuses_daily <> number_of_unclaimed_active_bonuses then number_of_unclaimed_active_bonuses_daily else number_of_unclaimed_active_bonuses end as number_of_unclaimed_active_bonuses,
+                            case when bonuses_not_allowed_daily <> bonuses_not_allowed then bonuses_not_allowed_daily else bonuses_not_allowed end as bonuses_not_allowed,
+                            case when has_reached_any_limit_daily <> has_reached_any_limit then has_reached_any_limit_daily else has_reached_any_limit end as has_reached_any_limit,
+                            case when group_type_daily <> group_type then group_type_daily else group_type end as group_type
+
+                            from (
+                                select
+
+                                opt_hourly.*,
+                                opt_daily_diff.number_of_unclaimed_active_bonuses as numer_of_unclaimed_active_bonuses_daily,
+                                opt_daily_diff.has_reached_any_limit as has_reached_any_limit_daily,
+                                opt_daily_diff.group_type as group_type_daily,
+                                opt_daily_diff.bonuses_not_allowed as bonuses_not_allowed_daily
+
+                                from `{os.environ.get('PROJECT')}.{os.environ.get('OPTIMOVE_DATASET')}.{os.environ.get('OPTI_TABLE_OPTIMOVE')}` as opt_hourly
+
+                                left join (
+                                            select
+
+                                            distinct wallet_username, group_type, bonuses_not_allowed, number_of_unclaimed_active_bonuses, has_reached_any_limit
+
+                                            from `{os.environ.get('PROJECT')}.{os.environ.get('OPTIMOVE_DATASET')}.api_attributes_daily`
+                                            
+                                            ) as opt_daily_diff
+                                on opt_hourly.wallet_username = opt_daily_diff.wallet_username
+                                )
+
+                            )
+                            
