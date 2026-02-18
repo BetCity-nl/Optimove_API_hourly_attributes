@@ -295,4 +295,4 @@ update_hourly_table_query = f"""
                                 )
 
                             )
-                            
+                            """
